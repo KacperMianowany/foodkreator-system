@@ -8,8 +8,7 @@ import yagmail
 import os
 
 app = Flask(__name__)
-
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}})
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
 app.config['JWT_SECRET_KEY'] = 'super-secret-key'
 
