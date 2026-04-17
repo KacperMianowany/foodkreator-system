@@ -1,7 +1,7 @@
-flask-cors
 flask
 flask_sqlalchemy
 flask_jwt_extended
 fpdf
 yagmail
 werkzeug
+flask-cors
