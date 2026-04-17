@@ -67,10 +67,20 @@ def create_order():
 
     return {"msg": "wysłano"}
 
-if __name__ == "__main__":
+iif __name__ == "__main__":
     db.create_all()
+
+    # 🔥 DODANIE ADMINA (jednorazowo)
+    from werkzeug.security import generate_password_hash
+
+    if not User.query.filter_by(username="admin").first():
+        user = User(
+            username="Kacper",
+            password=generate_password_hash("Kacper13274")
+        )
+        db.session.add(user)
+        db.session.commit()
+        print("Admin utworzony!")
+
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
-import os
-port = int(os.environ.get("PORT", 5000))
-app.run(host="0.0.0.0", port=port)
