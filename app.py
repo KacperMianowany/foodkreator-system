@@ -62,7 +62,7 @@ def create_order():
 
     pdf.output(filename)
 
-    yag = yagmail.SMTP("twoj_email@gmail.com", "haslo_aplikacji")
+    yag = yagmail.SMTP("twoj_email@gmail.com", "pdny pffd pxvc dllq")
     yag.send(email, "Zamówienie", "W załączniku zamówienie", attachments=filename)
 
     return {"msg": "wysłano"}
