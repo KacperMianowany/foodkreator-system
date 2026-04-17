@@ -69,17 +69,18 @@ def create_order():
     return {"msg": "wysłano"}
 
 if __name__ == "__main__":
-    db.create_all()
+    with app.app_context():
+        db.create_all()
 
-    from werkzeug.security import generate_password_hash
+        from werkzeug.security import generate_password_hash
 
-    if not User.query.filter_by(username="admin").first():
-        user = User(
-            username="admin",
-            password=generate_password_hash("admin123")
-        )
-        db.session.add(user)
-        db.session.commit()
+        if not User.query.filter_by(username="admin").first():
+            user = User(
+                username="admin",
+                password=generate_password_hash("admin123")
+            )
+            db.session.add(user)
+            db.session.commit()
 
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
