@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Foodkreator Panel</title>
+<style>
+body { font-family: Arial; background: #f5f5f5; }
+.container { max-width: 900px; margin: auto; }
+.card { background: white; padding: 20px; margin-top: 20px; border-radius: 12px; }
+button { background: black; color: white; padding: 10px; border: none; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<div class="card" id="loginBox">
+<h2>Logowanie</h2>
+<input id="user" placeholder="login"><br><br>
+<input id="pass" type="password" placeholder="hasło"><br><br>
+<button onclick="login()">Zaloguj</button>
+</div>
+
+<div id="app" style="display:none;">
+
+<div class="card">
+<h2>Produkty</h2>
+<div id="products"></div>
+</div>
+
+<div class="card">
+<h2>Zamówienie</h2>
+<input id="email" placeholder="Email odbiorcy"><br><br>
+<div id="order"></div>
+<button onclick="sendOrder()">Wyślij zamówienie</button>
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+let token = "";
+let products = [];
+let order = [];
+
+const API = "http://127.0.0.1:5000";
+
+function login(){
+    fetch(API + "/login", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({
+            username: user.value,
+            password: pass.value
+        })
+    })
+    .then(r=>r.json())
+    .then(data=>{
+        token = data.token;
+        document.getElementById("loginBox").style.display="none";
+        document.getElementById("app").style.display="block";
+        loadProducts();
+    });
+}
+
+function loadProducts(){
+    fetch(API + "/products", {
+        headers:{Authorization:"Bearer "+token}
+    })
+    .then(r=>r.json())
+    .then(data=>{
+        products = data;
+        renderProducts();
+    });
+}
+
+function renderProducts(){
+    let div = document.getElementById("products");
+    div.innerHTML="";
+    products.forEach(p=>{
+        div.innerHTML += `<div>${p.name} - ${p.price} zł <button onclick="add(${p.id})">Dodaj</button></div>`;
+    });
+}
+
+function add(id){
+    let qty = prompt("Ilość:");
+    let p = products.find(x=>x.id===id);
+    order.push({...p, qty});
+    renderOrder();
+}
+
+function renderOrder(){
+    let div = document.getElementById("order");
+    div.innerHTML="";
+    order.forEach(o=>{
+        div.innerHTML += `<div>${o.name} x ${o.qty}</div>`;
+    });
+}
+
+function sendOrder(){
+    fetch(API + "/order", {
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json",
+            Authorization:"Bearer "+token
+        },
+        body: JSON.stringify({
+            email: document.getElementById("email").value,
+            items: order
+        })
+    })
+    .then(()=>alert("Zamówienie wysłane!"));
+}
+
+</script>
+
+</body>
+</html>
