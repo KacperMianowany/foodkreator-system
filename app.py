@@ -82,6 +82,11 @@ iif __name__ == "__main__":
         db.session.add(user)
         db.session.commit()
         print("Admin utworzony!")
-
+@app.after_request
+def after_request(response):
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type,Authorization"
+    response.headers["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS"
+    return response
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
