@@ -119,17 +119,6 @@ def login_options():
     return response
 
 # ===== PRODUKTY =====
-@app.route('/products', methods=['GET'])
-@jwt_required()
-def get_products():
-    products = Product.query.all()
-    return jsonify([{
-        "id": p.id,
-        "name": p.name,
-        "price": p.price
-    } for p in products])
-
-# ===== ZAMÓWIENIE =====
 @app.route('/order', methods=['POST'])
 @jwt_required()
 def create_order():
@@ -143,17 +132,16 @@ def create_order():
     pdf.add_page()
     pdf.set_font("Arial", size=12)
 
-   pdf.cell(200, 10, txt="Foodkreator - Zamowienie", ln=True)
+    pdf.cell(200, 10, txt="Foodkreator - Zamowienie", ln=True)
     pdf.ln(10)
 
     for item in items:
         text = f"{item['name']} - {item['qty']} szt."
-text = text.encode('latin-1', 'replace').decode('latin-1')
-pdf.cell(200, 10, txt=text, ln=True)
+        text = text.encode('latin-1', 'replace').decode('latin-1')
+        pdf.cell(200, 10, txt=text, ln=True)
 
     pdf.output(filename)
 
-    # 🔥 SMTP (MUSI BYĆ TU!)
     import smtplib
     from email.message import EmailMessage
 
