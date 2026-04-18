@@ -104,7 +104,7 @@ def login():
     user = User.query.filter_by(username=data['username']).first()
 
     if user and check_password_hash(user.password, data['password']):
-        token = create_access_token(identity=user.id)
+        token = create_access_token(identity=str(user.id))
         return {"token": token}
 
     return {"msg": "bad login"}, 401
