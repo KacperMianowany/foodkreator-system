@@ -29,82 +29,12 @@ class Product(db.Model):
     name = db.Column(db.String(200))
     price = db.Column(db.Float)
 
-# ===== LOGIN =====
-@app.route('/login', methods=['POST'])
-def login():
-    data = request.json
-    user = User.query.filter_by(username=data['username']).first()
+# ===== INIT DB (NA RENDER) =====
+with app.app_context():
+    db.create_all()
 
-    if user and check_password_hash(user.password, data['password']):
-        token = create_access_token(identity=user.id)
-        return {"token": token}
-
-    return {"msg": "bad login"}, 401
-
-# ===== OPTIONS (CORS FIX) =====
-@app.route('/login', methods=['OPTIONS'])
-def login_options():
-    response = jsonify({})
-    response.headers["Access-Control-Allow-Origin"] = "*"
-    response.headers["Access-Control-Allow-Headers"] = "Content-Type,Authorization"
-    response.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
-    return response
-
-# ===== PRODUKTY =====
-@app.route('/products', methods=['GET'])
-@jwt_required()
-def get_products():
-    products = Product.query.all()
-    return jsonify([{
-        "id": p.id,
-        "name": p.name,
-        "price": p.price
-    } for p in products])
-
-# ===== ZAMÓWIENIE =====
-@app.route('/order', methods=['POST'])
-@jwt_required()
-def create_order():
-    data = request.json
-    items = data['items']
-    email = data['email']
-
-    filename = "zamowienie.pdf"
-
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", size=12)
-
-    pdf.cell(200, 10, txt="Foodkreator - Zamówienie", ln=True)
-    pdf.ln(10)
-
-    for item in items:
-        pdf.cell(200, 10, txt=f"{item['name']} - {item['qty']} szt.", ln=True)
-
-    pdf.output(filename)
-
-    # ⚠️ TU WPISZ SWÓJ EMAIL I HASŁO APP (GMAIL)
-    yag = yagmail.SMTP("cskasztany@gmail.com", "pdny pffd pxvc dllq")
-    yag.send(email, "Zamówienie", "W załączniku zamówienie", attachments=filename)
-
-    return {"msg": "wysłano"}
-
-# ===== GLOBALNY CORS =====
-@app.after_request
-def after_request(response):
-    response.headers["Access-Control-Allow-Origin"] = "*"
-    response.headers["Access-Control-Allow-Headers"] = "Content-Type,Authorization"
-    response.headers["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS"
-    return response
-
-# ===== START =====
-if __name__ == "__main__":
-    with app.app_context():
-        db.create_all()
-
-        # 🔥 RESET PRODUKTÓW (pierwsze uruchomienie)
-        Product.query.delete()
-        db.session.commit()
+    # produkty tylko jeśli brak
+    if Product.query.count() == 0:
 
         produkty = [
 
@@ -155,14 +85,87 @@ if __name__ == "__main__":
 
         db.session.commit()
 
-        # 🔐 ADMIN
-        if not User.query.filter_by(username="admin").first():
-            user = User(
-                username="admin",
-                password=generate_password_hash("admin123")
-            )
-            db.session.add(user)
-            db.session.commit()
+    # admin
+    if not User.query.filter_by(username="admin").first():
+        user = User(
+            username="admin",
+            password=generate_password_hash("admin123")
+        )
+        db.session.add(user)
+        db.session.commit()
 
+# ===== LOGIN =====
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.json
+    user = User.query.filter_by(username=data['username']).first()
+
+    if user and check_password_hash(user.password, data['password']):
+        token = create_access_token(identity=user.id)
+        return {"token": token}
+
+    return {"msg": "bad login"}, 401
+
+# ===== OPTIONS =====
+@app.route('/login', methods=['OPTIONS'])
+def login_options():
+    response = jsonify({})
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type,Authorization"
+    response.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+    return response
+
+# ===== PRODUKTY =====
+@app.route('/products', methods=['GET'])
+@jwt_required()
+def get_products():
+    products = Product.query.all()
+    return jsonify([{
+        "id": p.id,
+        "name": p.name,
+        "price": p.price
+    } for p in products])
+
+# ===== ZAMÓWIENIE =====
+@app.route('/order', methods=['POST'])
+@jwt_required()
+def create_order():
+    data = request.json
+    items = data['items']
+    email = data['email']
+
+    filename = "zamowienie.pdf"
+
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+
+    pdf.cell(200, 10, txt="Foodkreator - Zamówienie", ln=True)
+    pdf.ln(10)
+
+    for item in items:
+        pdf.cell(200, 10, txt=f"{item['name']} - {item['qty']} szt.", ln=True)
+
+    pdf.output(filename)
+
+    yag = yagmail.SMTP(
+        os.environ.get("EMAIL"),
+        os.environ.get("EMAIL_PASS")
+    )
+
+    yag.send(email, "Zamówienie", "W załączniku zamówienie", attachments=filename)
+
+    return {"msg": "wysłano"}
+
+# ===== GLOBALNY CORS =====
+@app.after_request
+def after_request(response):
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type,Authorization"
+    response.headers["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS"
+    return response
+
+# ===== START =====
+if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
