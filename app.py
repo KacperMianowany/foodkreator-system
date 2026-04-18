@@ -9,7 +9,7 @@ import os
 
 app = Flask(__name__)
 
-# 🔥 CORS (ważne)
+# ===== CORS =====
 CORS(app, resources={r"/*": {"origins": "*"}})
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
@@ -41,7 +41,7 @@ def login():
 
     return {"msg": "bad login"}, 401
 
-# 🔥 OPTIONS (CORS FIX)
+# ===== OPTIONS (CORS FIX) =====
 @app.route('/login', methods=['OPTIONS'])
 def login_options():
     response = jsonify({})
@@ -55,7 +55,11 @@ def login_options():
 @jwt_required()
 def get_products():
     products = Product.query.all()
-    return jsonify([{"id":p.id,"name":p.name,"price":p.price} for p in products])
+    return jsonify([{
+        "id": p.id,
+        "name": p.name,
+        "price": p.price
+    } for p in products])
 
 # ===== ZAMÓWIENIE =====
 @app.route('/order', methods=['POST'])
@@ -79,12 +83,13 @@ def create_order():
 
     pdf.output(filename)
 
-    yag = yagmail.SMTP("twoj_email@gmail.com", "pdny pffd pxvc dllq")
+    # ⚠️ TU WPISZ SWÓJ EMAIL I HASŁO APP (GMAIL)
+    yag = yagmail.SMTP("cskasztany@gmail.com", "pdny pffd pxvc dllq")
     yag.send(email, "Zamówienie", "W załączniku zamówienie", attachments=filename)
 
     return {"msg": "wysłano"}
 
-# 🔥 GLOBALNY CORS FIX
+# ===== GLOBALNY CORS =====
 @app.after_request
 def after_request(response):
     response.headers["Access-Control-Allow-Origin"] = "*"
@@ -97,6 +102,60 @@ if __name__ == "__main__":
     with app.app_context():
         db.create_all()
 
+        # 🔥 RESET PRODUKTÓW (pierwsze uruchomienie)
+        Product.query.delete()
+        db.session.commit()
+
+        produkty = [
+
+        # ===== 400g =====
+        {"name":"Pierogi ruskie 400g", "price":8.99},
+        {"name":"Pierogi z mięsem 400g", "price":12.50},
+        {"name":"Pierogi z kapustą 400g", "price":9.75},
+        {"name":"Kopytka 400g", "price":7.45},
+        {"name":"Leniwe 400g", "price":8.75},
+        {"name":"Pierogi z serem 400g", "price":10.50},
+        {"name":"Pierogi szpinak + ser 400g", "price":10.90},
+        {"name":"Pierogi z soczewicą 400g", "price":8.40},
+        {"name":"Pierogi kaczka + jabłko 400g", "price":16.99},
+        {"name":"Pierogi ruskie tofu VEGE 320g", "price":9.90},
+        {"name":"Pierogi masala VEGE 320g", "price":7.99},
+        {"name":"Pierogi wiejskie 400g", "price":9.25},
+
+        # ===== 1kg =====
+        {"name":"Pierogi ruskie 1kg", "price":16.95},
+        {"name":"Pierogi z mięsem 1kg", "price":24.95},
+        {"name":"Pierogi z kapustą 1kg", "price":18.75},
+        {"name":"Kopytka 1kg", "price":14.95},
+        {"name":"Pierogi z serem 1kg", "price":19.95},
+        {"name":"Pierogi szpinak + ser 1kg", "price":19.95},
+        {"name":"Pierogi z soczewicą 1kg", "price":15.95},
+        {"name":"Pierogi wiejskie 1kg", "price":17.95},
+        {"name":"Uszka z grzybami 1kg", "price":42.50},
+
+        # ===== DANIA =====
+        {"name":"Penne kurczak + suszone pomidory 360g", "price":9.50},
+        {"name":"Gulasz wieprzowy + kasza bulgur 360g", "price":8.20},
+        {"name":"Łazanki 360g", "price":8.20},
+        {"name":"Tortilla burrito", "price":11.49},
+        {"name":"Tortilla z kurczakiem", "price":11.49},
+        {"name":"Naleśniki z serem 400g", "price":10.50},
+        {"name":"Naleśniki z jabłkami 400g", "price":9.80},
+
+        # ===== SEZONOWE =====
+        {"name":"Pierogi truskawka 400g", "price":8.99},
+        {"name":"Pierogi wiśnia 400g", "price":9.50},
+        {"name":"Pierogi jagoda 400g", "price":12.90},
+        {"name":"Uszka z grzybami 400g", "price":17.50},
+
+        ]
+
+        for p in produkty:
+            db.session.add(Product(name=p["name"], price=p["price"]))
+
+        db.session.commit()
+
+        # 🔐 ADMIN
         if not User.query.filter_by(username="admin").first():
             user = User(
                 username="admin",
