@@ -8,13 +8,17 @@ import yagmail
 import os
 
 app = Flask(__name__)
+
+# 🔥 CORS (ważne)
 CORS(app, resources={r"/*": {"origins": "*"}})
+
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
 app.config['JWT_SECRET_KEY'] = 'super-secret-key'
 
 db = SQLAlchemy(app)
 jwt = JWTManager(app)
 
+# ===== MODELE =====
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), unique=True)
@@ -25,6 +29,7 @@ class Product(db.Model):
     name = db.Column(db.String(200))
     price = db.Column(db.Float)
 
+# ===== LOGIN =====
 @app.route('/login', methods=['POST'])
 def login():
     data = request.json
@@ -36,12 +41,23 @@ def login():
 
     return {"msg": "bad login"}, 401
 
+# 🔥 OPTIONS (CORS FIX)
+@app.route('/login', methods=['OPTIONS'])
+def login_options():
+    response = jsonify({})
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type,Authorization"
+    response.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+    return response
+
+# ===== PRODUKTY =====
 @app.route('/products', methods=['GET'])
 @jwt_required()
 def get_products():
     products = Product.query.all()
     return jsonify([{"id":p.id,"name":p.name,"price":p.price} for p in products])
 
+# ===== ZAMÓWIENIE =====
 @app.route('/order', methods=['POST'])
 @jwt_required()
 def create_order():
@@ -68,11 +84,18 @@ def create_order():
 
     return {"msg": "wysłano"}
 
+# 🔥 GLOBALNY CORS FIX
+@app.after_request
+def after_request(response):
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type,Authorization"
+    response.headers["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS"
+    return response
+
+# ===== START =====
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
-
-        from werkzeug.security import generate_password_hash
 
         if not User.query.filter_by(username="admin").first():
             user = User(
