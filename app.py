@@ -151,15 +151,34 @@ def create_order():
 
     pdf.output(filename)
 
-    yag = yagmail.SMTP(
-        os.environ.get("EMAIL"),
-        os.environ.get("EMAIL_PASS")
-    )
+    import smtplib
+from email.message import EmailMessage
 
-    yag.send(email, "Zamówienie", "W załączniku zamówienie", attachments=filename)
+try:
+    msg = EmailMessage()
+    msg['Subject'] = 'Zamówienie Foodkreator'
+    msg['From'] = os.environ.get("EMAIL_USER")
+    msg['To'] = email
+
+    msg.set_content("W załączniku zamówienie")
+
+    with open(filename, 'rb') as f:
+        file_data = f.read()
+        msg.add_attachment(file_data, maintype='application', subtype='pdf', filename=filename)
+
+    with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
+        smtp.login(
+            os.environ.get("EMAIL_USER"),
+            os.environ.get("EMAIL_PASS")
+        )
+        smtp.send_message(msg)
 
     return {"msg": "wysłano"}
 
+except Exception as e:
+    print("BŁĄD EMAIL:", str(e))
+    return {"msg": str(e)}, 500
+    
 # ===== GLOBALNY CORS =====
 @app.after_request
 def after_request(response):
