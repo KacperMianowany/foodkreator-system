@@ -45,29 +45,45 @@ let token = "";
 let products = [];
 let order = [];
 
-const API = "https://foodkreator-backend.onrender.com";
+// 🔥 POPRAWNY BACKEND
+const API = "https://foodkreator-system.onrender.com";
 
+// ===== LOGIN =====
 function login(){
     fetch(API + "/login", {
         method:"POST",
-        headers:{"Content-Type":"application/json"},
+        headers:{
+            "Content-Type":"application/json"
+        },
         body: JSON.stringify({
-            username: user.value,
-            password: pass.value
+            username: document.getElementById("user").value,
+            password: document.getElementById("pass").value
         })
     })
-    .then(r=>r.json())
+    .then(res => {
+        if(!res.ok){
+            throw new Error("Błąd logowania");
+        }
+        return res.json();
+    })
     .then(data=>{
         token = data.token;
         document.getElementById("loginBox").style.display="none";
         document.getElementById("app").style.display="block";
         loadProducts();
+    })
+    .catch(err=>{
+        alert("Serwer się uruchamia... kliknij jeszcze raz za chwilę");
+        console.error(err);
     });
 }
 
+// ===== PRODUKTY =====
 function loadProducts(){
     fetch(API + "/products", {
-        headers:{Authorization:"Bearer "+token}
+        headers:{
+            Authorization:"Bearer "+token
+        }
     })
     .then(r=>r.json())
     .then(data=>{
@@ -76,14 +92,21 @@ function loadProducts(){
     });
 }
 
+// ===== RENDER =====
 function renderProducts(){
     let div = document.getElementById("products");
     div.innerHTML="";
+
     products.forEach(p=>{
-        div.innerHTML += `<div>${p.name} - ${p.price} zł <button onclick="add(${p.id})">Dodaj</button></div>`;
+        div.innerHTML += `
+        <div>
+        ${p.name} - ${p.price} zł 
+        <button onclick="add(${p.id})">Dodaj</button>
+        </div>`;
     });
 }
 
+// ===== DODAWANIE =====
 function add(id){
     let qty = prompt("Ilość:");
     let p = products.find(x=>x.id===id);
@@ -91,14 +114,17 @@ function add(id){
     renderOrder();
 }
 
+// ===== ZAMÓWIENIE =====
 function renderOrder(){
     let div = document.getElementById("order");
     div.innerHTML="";
+
     order.forEach(o=>{
         div.innerHTML += `<div>${o.name} x ${o.qty}</div>`;
     });
 }
 
+// ===== WYŚLIJ =====
 function sendOrder(){
     fetch(API + "/order", {
         method:"POST",
