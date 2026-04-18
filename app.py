@@ -14,6 +14,9 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
 app.config['JWT_SECRET_KEY'] = 'super-secret-key'
+app.config["JWT_TOKEN_LOCATION"] = ["headers"]
+app.config["JWT_HEADER_NAME"] = "Authorization"
+app.config["JWT_HEADER_TYPE"] = "Bearer"
 
 db = SQLAlchemy(app)
 jwt = JWTManager(app)
