@@ -60,21 +60,25 @@ function login(){
             password: document.getElementById("pass").value
         })
     })
-    .then(res => {
-        if(!res.ok){
-            throw new Error("Błąd logowania");
-        }
-        return res.json();
-    })
+    .then(res => res.json())
     .then(data=>{
+        console.log("TOKEN:", data);
+
+        if(!data.token){
+            alert("Błąd logowania");
+            return;
+        }
+
         token = data.token;
+
         document.getElementById("loginBox").style.display="none";
         document.getElementById("app").style.display="block";
+
         loadProducts();
     })
     .catch(err=>{
-        alert("Serwer się uruchamia... kliknij jeszcze raz za chwilę");
         console.error(err);
+        alert("Błąd połączenia z backendem");
     });
 }
 
