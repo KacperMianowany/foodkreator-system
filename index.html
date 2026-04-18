@@ -84,18 +84,30 @@ function login(){
 
 // ===== PRODUKTY =====
 function loadProducts(){
+    console.log("TOKEN W PRODUCTS:", token); 
+
     fetch(API + "/products", {
         headers:{
             Authorization:"Bearer "+token
         }
     })
-    .then(r=>r.json())
+    .then(r=>{
+        if(!r.ok){
+            throw new Error("Błąd pobierania produktów");
+        }
+        return r.json();
+    })
     .then(data=>{
+        console.log("PRODUKTY:", data); // 🔥 TU!
+
         products = data;
         renderProducts();
+    })
+    .catch(err=>{
+        console.error(err);
+        alert("Nie można pobrać produktów");
     });
 }
-
 // ===== RENDER =====
 function renderProducts(){
     let div = document.getElementById("products");
