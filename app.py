@@ -143,11 +143,13 @@ def create_order():
     pdf.add_page()
     pdf.set_font("Arial", size=12)
 
-    pdf.cell(200, 10, txt="Foodkreator - Zamówienie", ln=True)
+   pdf.cell(200, 10, txt="Foodkreator - Zamowienie", ln=True)
     pdf.ln(10)
 
     for item in items:
-        pdf.cell(200, 10, txt=f"{item['name']} - {item['qty']} szt.", ln=True)
+        text = f"{item['name']} - {item['qty']} szt."
+text = text.encode('latin-1', 'replace').decode('latin-1')
+pdf.cell(200, 10, txt=text, ln=True)
 
     pdf.output(filename)
 
